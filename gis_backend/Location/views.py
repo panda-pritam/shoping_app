@@ -83,14 +83,18 @@ def filter_locations(request):
     if request.method != 'GET':
         return HttpResponseNotAllowed(['GET'])
 
-    query = request.GET.get('q')  # Unified search for name and location_name
+    query = request.GET.get('q')  # Unified search for name and location_name and type
     loc_type = request.GET.get('type')
 
     filters = Q()
     if query:
-        filters &= Q(name__icontains=query) | Q(location_name__icontains=query)
+        filters &= (
+            Q(name__icontains=query) |
+            Q(location_name__icontains=query) |
+            Q(type__icontains=query)
+        )
     if loc_type:
-        filters &= Q(type=loc_type)
+        filters &= Q(type__iexact=loc_type)  # Case-insensitive exact match
 
     locations = Location.objects.filter(filters).values()
-    return JsonResponse(list(locations), safe=False)  # ✅ Add this line
+    return JsonResponse(list(locations), safe=False)
